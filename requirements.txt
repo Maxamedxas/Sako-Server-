@@ -1,4 +1,5 @@
 flask
+flask-bcrypt
 google-generativeai
-gunicorn
 requests
+gunicorn

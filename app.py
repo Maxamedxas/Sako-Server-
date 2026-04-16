@@ -2,123 +2,77 @@ import os
 import google.generativeai as genai
 from flask import Flask, request, render_template_string, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
-import requests
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "sako_99_guardian_vault_2026")
+app.secret_key = os.environ.get("SECRET_KEY", "sako_99_auto_vault")
 
 # --- AI CONFIGURATION ---
 API_KEY = os.environ.get("GEMINI_API_KEY")
 if API_KEY:
     genai.configure(api_key=API_KEY)
 
-# MASKAXDA AI-GA: SAKO 99 AI
+# SAKO 99 SYSTEM INSTRUCTION
 instruction = (
-    "Magacaaga waa SAKO 99 AI. Waxaad tahay khabiir caalami ah oo ku takhasusay Software Architecture. "
-    "Waxaad tahay master-ka luuqadaha Rust, C++, Java, iyo Python. "
-    "Marka qofku ku soo galo, si diiran ugu soo dhowee qoraal qurux badan iyo Emojis. "
-    "Koodhka aad bixinayso ha noqdo mid professional ah oo leh sharaxaad kooban."
+    "Magacaaga waa SAKO 99 AI. Waxaad tahay nidaam otomaatig ah (Automation Engine). "
+    "Hadafkaagu waa inaad si dhakhso ah u soo saarto koodhka Rust, C++, Java, iyo Python adigoon qofka sugin. "
+    "Koodhkaagu ha noqdo mid GitHub-style ah oo nadiif ah."
 )
 model = genai.GenerativeModel('gemini-1.5-flash', system_instruction=instruction)
 
-# Database-ka (Identifier: admin | Security Key: sako99)
+# LOGIN: Identifier: admin | Security Key: sako99
 users_db = {"admin": generate_password_hash("sako99")}
 
-# --- MUUQAALKA (GitHub Dark VIP) ---
+# --- DASHBOARD UI (AUTO-GENERATOR) ---
 HTML_LAYOUT = """
 <!DOCTYPE html>
 <html lang="so">
 <head>
     <meta charset="UTF-8">
-    <title>SAKO 99 AI | ELITE VAULT</title>
+    <title>SAKO 99 | AUTO-DASHBOARD</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { background: #0d1117; color: #c9d1d9; font-family: -apple-system, sans-serif; margin: 0; }
-        .nav { background: #161b22; border-bottom: 1px solid #30363d; padding: 15px; display: flex; justify-content: center; gap: 30px; }
-        .nav a { color: #8b949e; text-decoration: none; font-size: 14px; font-weight: 600; text-transform: uppercase; }
-        .nav a:hover { color: #58a6ff; }
-        .container { max-width: 900px; margin: 40px auto; padding: 30px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
-        .scan-line { height: 2px; background: #238636; width: 0%; animation: scan 3s infinite; margin-bottom: 15px; }
-        @keyframes scan { 0% { width: 0%; } 50% { width: 100%; } 100% { width: 0%; } }
-        h2 { border-bottom: 1px solid #21262d; padding-bottom: 10px; font-weight: 200; text-align: center; letter-spacing: 5px; color: #fff; }
-        #chat-box, #code-res { height: 400px; overflow-y: auto; background: #010409; border: 1px solid #30363d; border-radius: 6px; padding: 20px; font-family: 'Consolas', monospace; font-size: 13px; color: #d1d5da; margin-bottom: 20px; }
-        .ai-msg { color: #58a6ff; margin-bottom: 15px; }
-        .sys-log { color: #8b949e; font-size: 11px; margin-bottom: 5px; }
-        input, select { width: 78%; padding: 12px; background: #0d1117; border: 1px solid #30363d; color: #fff; border-radius: 6px; outline: none; }
-        button { width: 20%; padding: 12px; background: #238636; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
-        button:hover { background: #2ea043; }
-        .code-section { display: none; }
+        body { background: #010409; color: #c9d1d9; font-family: -apple-system, sans-serif; margin: 0; }
+        .header { background: #161b22; border-bottom: 1px solid #30363d; padding: 20px; text-align: center; }
+        .main { max-width: 1000px; margin: 30px auto; padding: 20px; border: 1px solid #30363d; border-radius: 8px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .card { background: #0d1117; border: 1px solid #30363d; padding: 20px; border-radius: 6px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .card:hover { border-color: #58a6ff; background: #161b22; }
+        .terminal { background: #000; border: 1px solid #238636; padding: 15px; font-family: monospace; height: 300px; overflow-y: auto; color: #39ff14; }
+        input { width: 75%; padding: 12px; background: #0d1117; border: 1px solid #30363d; color: #fff; margin-top: 10px; }
+        button { width: 20%; padding: 12px; background: #238636; color: #fff; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
-    <div class="nav">
-        <a href="javascript:void(0)" onclick="show('chat')">AI DASHBOARD</a>
-        <a href="javascript:void(0)" onclick="show('code')">CORE TERMINAL</a>
-        <a href="/logout" style="color:#f85149;">DESTROY SESSION</a>
+    <div class="header">
+        <h1 style="letter-spacing: 5px;">SAKO 99 AI v6.0</h1>
+        <p>Elite Automation & Scripting Engine</p>
     </div>
-    <div class="container">
-        <div class="scan-line"></div>
-        
-        <div id="chat-section">
-            <h2>SAKO 99 AI DASHBOARD</h2>
-            <div id="chat-box">
-                <div class="sys-log">[SYSTEM]: Global Uplink Active.</div>
-                <div class="ai-msg"><b>SAKO 99 AI:</b> Online. Sideen kuu caawiyaa maanta? 💎</div>
-            </div>
-            <input type="text" id="userInput" placeholder="Geli fariintaada..." onkeypress="if(event.keyCode==13) ask()">
-            <button onclick="ask()">SEND</button>
+    <div class="main">
+        <div class="grid">
+            <div class="card" onclick="autoBuild('Rust')">🚀 BUILD RUST</div>
+            <div class="card" onclick="autoBuild('C++')">⚙️ BUILD C++</div>
+            <div class="card" onclick="autoBuild('Python')">🐍 BUILD PYTHON</div>
+            <div class="card" onclick="autoBuild('Java')">☕ BUILD JAVA</div>
         </div>
-
-        <div id="code-section" class="code-section">
-            <h2>CORE TERMINAL</h2>
-            <div id="code-res">Dooro luuqada iyo waxaad rabto inaad dhisid...</div>
-            <div style="display:flex; gap:10px;">
-                <select id="lang">
-                    <option value="Rust">RUST (HIGH SPEED)</option>
-                    <option value="C++">C++ (SYSTEM)</option>
-                    <option value="Java">JAVA (ENTERPRISE)</option>
-                    <option value="Python">PYTHON (AI/AUTO)</option>
-                </select>
-                <input type="text" id="codeDesc" placeholder="Maxaan kuu qoraa? (tusaale: Virus Scanner)" style="width:55%;">
-                <button onclick="buildCode()" style="width:20%;">BUILD</button>
-            </div>
-        </div>
+        <div class="terminal" id="term">SAKO 99 SYSTEM READY... Waiting for command.</div>
+        <input type="text" id="cmd" placeholder="Tusaale: Ii dhis script-ka FF Sensitivity...">
+        <button onclick="ask()">EXECUTE</button>
     </div>
-
     <script>
-        function show(type) {
-            document.getElementById('chat-section').style.display = type === 'chat' ? 'block' : 'none';
-            document.getElementById('code-section').style.display = type === 'code' ? 'block' : 'none';
+        async function autoBuild(lang) {
+            document.getElementById('term').innerText = "[AUTOMATION]: Generating " + lang + " Elite Script...";
+            ask("Ii qor koodh professional ah oo " + lang + " ah.");
         }
-
-        async function ask() {
-            let inp = document.getElementById('userInput');
-            let box = document.getElementById('chat-box');
-            if(!inp.value) return;
-            box.innerHTML += `<div class='sys-log'>[USER]: ${{inp.value}}</div>`;
+        async function ask(customMsg = null) {
+            let msg = customMsg || document.getElementById('cmd').value;
+            if(!msg) return;
             let res = await fetch('/ask', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({message: inp.value})
+                body: JSON.stringify({message: msg})
             });
             let data = await res.json();
-            box.innerHTML += `<div class='ai-msg'><b>SAKO 99 AI:</b> ${{data.response}}</div>`;
-            inp.value = ""; box.scrollTop = box.scrollHeight;
-        }
-
-        async function buildCode() {
-            let lang = document.getElementById('lang').value;
-            let desc = document.getElementById('codeDesc').value;
-            let resBox = document.getElementById('code-res');
-            if(!desc) return;
-            resBox.innerHTML = "[COMPILING]: Fadlan sug, koodhkaaga waa la diyaarinayaa...";
-            let res = await fetch('/ask', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({message: "Ii qor koodh professional ah oo " + lang + " ah. Waxaa loogu talagalay: " + desc})
-            });
-            let data = await res.json();
-            resBox.innerText = data.response;
+            document.getElementById('term').innerText = data.response;
         }
     </script>
 </body>
@@ -132,13 +86,12 @@ def index():
 
 @app.route('/ask', methods=['POST'])
 def ask():
-    if 'username' not in session: return jsonify({"response": "Denied."})
     msg = request.json.get("message", "")
     try:
         response = model.generate_content(msg)
         return jsonify({"response": response.text})
     except:
-        return jsonify({"response": "Error: Link Lost."})
+        return jsonify({"response": "Error: Link to AI lost."})
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -149,18 +102,7 @@ def login():
             session['username'] = user
             return redirect(url_for('index'))
         return "Key Incorrect."
-    
-    login_html = """
-    <div style="background:#0d1117; height:100vh; display:flex; align-items:center; justify-content:center; flex-direction:column;">
-        <h2 style="color:#fff; letter-spacing:10px;">VAULT ACCESS</h2>
-        <form method="post" style="width:300px;">
-            <input type="text" name="username" placeholder="IDENTIFIER" required style="width:100%; margin-bottom:15px; border:1px solid #30363d;"><br>
-            <input type="password" name="password" placeholder="SECURITY KEY" required style="width:100%; margin-bottom:15px; border:1px solid #30363d;"><br>
-            <button type="submit" style="width:100%; background:#238636;">ENTER</button>
-        </form>
-    </div>
-    """
-    return render_template_string(login_html)
+    return render_template_string('<div style="background:#000; height:100vh; color:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center;"><h2>VAULT ACCESS</h2><form method="post"><input name="username" placeholder="admin"><br><input type="password" name="password" placeholder="sako99"><br><button>ENTER</button></form></div>')
 
 @app.route('/logout')
 def logout():

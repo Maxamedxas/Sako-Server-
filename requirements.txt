@@ -2,3 +2,5 @@ flask
 google-generativeai
 werkzeug
 requests
+gunicorn
+python-dotenv
